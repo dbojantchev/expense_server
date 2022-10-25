@@ -1,6 +1,13 @@
 var express = require("express");
+var bodyParser = require('body-parser')
 var request = require('request');
 var app = express();
+
+var jsonParser = bodyParser.json()
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
+
+app.use(urlencodedParser)
+app.use(jsonParser)
 
 const { Pool } = require('pg')
 const pool = new Pool({
@@ -40,13 +47,35 @@ app.get(`/api/expense`, (req, res) => {
     })
 });
 
-app.get(`/api/expense/id`, (req, res) => {
-    console.log("get one expenses from table defined by id")
+// test with http://localhost:3001/api/expense/4
+
+app.get(`/api/expense/:id`, (req, res) => {
+    var id = req.params.id; //!!!!!
+    console.log(`get one expenses from table defined by id = ${id}`)
     pool.connect((err, client, release) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
         }
-        client.query('SELECT * from expense WHERE id = 2', (err, result) => {
+        client.query(`SELECT * from expense WHERE id = ${id}`, (err, result) => {
+            release()
+            if (err) {
+                return console.error('Error executing query', err.stack)
+            }
+            console.log(result.rows)
+            res.json(result.rows)
+        })
+    })
+});
+
+// Test with http://localhost:3001/api/expense2?id=3
+app.get(`/api/expense2/`, (req, res) => {
+    var id = req.query.id; //!!!!!
+    console.log(`get one expenses from table defined by id = ${id}`)
+    pool.connect((err, client, release) => {
+        if (err) {
+            return console.error('Error acquiring client', err.stack)
+        }
+        client.query(`SELECT * from expense WHERE id = ${id}`, (err, result) => {
             release()
             if (err) {
                 return console.error('Error executing query', err.stack)
@@ -58,7 +87,7 @@ app.get(`/api/expense/id`, (req, res) => {
 });
 
 app.post(`/api/expense`, (req, res) => {
-    console.log("create a new expense record")
+    console.log(`create a new expense record req.body = ${JSON.stringify(req.body)}`)
     pool.connect((err, client, release) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
