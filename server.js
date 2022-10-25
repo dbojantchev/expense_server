@@ -63,7 +63,7 @@ app.post(`/api/expense`, (req, res) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
         }
-        client.query("INSERT INTO expense (id, name, amount, create_date, update_date) values (nextval('firstsequence'), 'Node expense', 57.872, '2022-10-17', '2022-11-09')", (err, result) => {
+        client.query("INSERT INTO expense (id, name, amount, create_date, update_date, person_id) values (nextval('firstsequence'), 'Node expense', 57.872, '2022-10-17', '2022-11-09', 1)", (err, result) => {
             release()
             if (err) {
                 return console.error('Error executing query', err.stack)
@@ -73,13 +73,13 @@ app.post(`/api/expense`, (req, res) => {
     })
 });
 
-app.put(`/api/expense/{expense}`, (req, res) => {
+app.put(`/api/expense/id`, (req, res) => {
     console.log("update an expense record")
     pool.connect((err, client, release) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
         }
-        client.query('UPDATE EXPENSE SET AMOUNT = 2 WHERE ID = 1', (err, result) => {
+        client.query('UPDATE EXPENSE SET AMOUNT = 2 WHERE ID = 3', (err, result) => {
             release()
             if (err) {
                 return console.error('Error executing query', err.stack)
@@ -95,7 +95,7 @@ app.delete(`/api/expense/id`, (req, res) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
         }
-        client.query('DELETE FROM expense WHERE ID=5;', (err, result) => {
+        client.query('DELETE FROM expense WHERE ID=1;', (err, result) => {
             release()
             if (err) {
                 return console.error('Error executing query', err.stack)
