@@ -2,7 +2,6 @@ var express = require("express");
 var bodyParser = require('body-parser')
 var request = require('request');
 var app = express();
-
 var jsonParser = bodyParser.json()
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
@@ -69,8 +68,9 @@ app.get(`/api/expense/:id`, (req, res) => {
 
 // Test with http://localhost:3001/api/expense2?id=3
 app.get(`/api/expense2/`, (req, res) => {
+    console.log(JSON.stringify(req.query))
     var id = req.query.id; //!!!!!
-    console.log(`get one expenses from table defined by id = ${id}`)
+    console.log(`get one expense from table defined by id = ${id}`)
     pool.connect((err, client, release) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
@@ -88,48 +88,99 @@ app.get(`/api/expense2/`, (req, res) => {
 
 app.post(`/api/expense`, (req, res) => {
     console.log(`create a new expense record req.body = ${JSON.stringify(req.body)}`)
+    //console.log(`name : ${JSON.stringify(req.body["name"])} \n`)
+
+    const name  =  JSON.stringify(req.body["name"]);
+    const amount = parseFloat(req.body["amount"]);
+    const date  =  JSON.stringify(req.body["date"]);
+    console.log( `amount int = ${amount}\n`)
+
     pool.connect((err, client, release) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
         }
-        client.query("INSERT INTO expense (id, name, amount, create_date, update_date, person_id) values (nextval('firstsequence'), 'Node expense', 57.872, '2022-10-17', '2022-11-09', 1)", (err, result) => {
-            release()
+        client.query("INSERT INTO expense (id, name, amount, create_date, update_date, person_id) " +
+            "values (nextval('firstsequence'), ($1), ($2), ($3), ($4), 1)",[name, amount, date, date],
+            (err, result) => {
+                console.log(`res = ${result}`)
+                //console.log(`error = ${err}`)
+                release()
             if (err) {
-                return console.error('Error executing query', err.stack)
+                console.error('Error executing query', err.stack)
+                res.json({err})
+                return
             }
-            console.log(result.rows)
+            res.json(result)
         })
     })
 });
 
-app.put(`/api/expense/id`, (req, res) => {
-    console.log("update an expense record")
+/*app.post(`/api/expense`, (req, res) => {
+    console.log(`create a new expense record req.body = ${JSON.stringify(req.body)}`)
+    const { name } = req.body;
+    const { amount } = req.body;
+    const { date } = req.body;
     pool.connect((err, client, release) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
         }
-        client.query('UPDATE EXPENSE SET AMOUNT = 2 WHERE ID = 3', (err, result) => {
+        client.query("INSERT INTO expense (id, name, amount, create_date, update_date, person_id) " +
+            "values (nextval('firstsequence'), ($1), ($2), ($3), ($4), 1",[name], [amount], [date], [date],
+            (err, result) => {
+                console.log(`res = ${result}`)
+                console.log(`error = ${err}`)
+                release()
+                if (err) {
+                    console.error('Error executing query', err.stack)
+                    res.json({err})
+                    return
+                }
+                res.json(result)
+            })
+    })
+});*/
+
+app.put(`/api/expense/:id`, (req, res) => {
+    var id = req.params.id; //!!!!!
+
+
+    const name  =  req.body.name;
+    const amount = parseFloat(req.body["amount"]);
+    //const date  =  req.body.date;
+    console.log(`update an expense record id: ${id}  name: ${name}`)
+
+    pool.connect((err, client, release) => {
+        if (err) {
+            return console.error('Error acquiring client', err.stack)
+        }
+        client.query('UPDATE EXPENSE SET NAME = $1, AMOUNT = $2 WHERE ID = $3', [name, amount, req.params.id],  (err, result) => {
             release()
             if (err) {
+                res.json({err})
                 return console.error('Error executing query', err.stack)
             }
             console.log(result.rows)
+            res.json(result)
         })
     })
 });
 
-app.delete(`/api/expense/id`, (req, res) => {
+app.delete(`/api/expense/:id`, (req, res) => {
     console.log("delete an expense record")
+    var id = req.params.id; //!!!!!
+    console.log(`delete id: ${id}`)
     pool.connect((err, client, release) => {
         if (err) {
             return console.error('Error acquiring client', err.stack)
         }
-        client.query('DELETE FROM expense WHERE ID=1;', (err, result) => {
+            client.query(`DELETE FROM expense WHERE ID=${id}`, (err, result) => {
             release()
             if (err) {
+                res.json({err})
                 return console.error('Error executing query', err.stack)
             }
             console.log(result.rows)
+                res.json(result)
         })
     })
 });
